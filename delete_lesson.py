@@ -28,7 +28,9 @@ def delete_lesson(file_path, lesson_id_to_delete):
     # Check if the lesson exists
     if lesson_id_to_delete in lessons:
         # Remove the lesson
-        deleted_lesson = lessons.pop(lesson_id_to_delete)
+        # deleted_lesson = lessons.pop(lesson_id_to_delete)
+
+        lessons[lesson_id_to_delete]['status'] = False
         
         # Save the updated lessons
         save_lessons(lessons, file_path)
