@@ -101,7 +101,16 @@ intent_prompt = """
         Đối với class greeting, toxic, other: Trả về JSON gồm 2 key là class và answer.
         Đối với class study: Trả về JSON gồm 3 key là class, answer, và id_lesson.
         Lưu ý: Các câu trả lời đều phải cùng ngôn ngữ với câu hỏi (thường là tiếng Việt).
+
+
         """
+
+lesson_content = """
+id_lesson - summary
+"""
+
+prompt = intent_prompt.format(lesson_content=lesson_content)
+
 
 hyde_prompt = """
 Bạn là AI-tutor, một chatbot hỗ trợ học tập thông minh. Nhiệm vụ của bạn là trả lời các câu hỏi của class study một cách chính xác, chi tiết và dễ hiểu. Khi trả lời, hãy tuân thủ các yêu cầu sau:

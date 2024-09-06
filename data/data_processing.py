@@ -28,7 +28,7 @@ def read_txt(file_path):
     """
     content = ""
     try:
-        with open(file_path, 'r', encoding='utf8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
     except Exception as e:
         print(f"Error reading TXT file: {e}")
@@ -84,11 +84,11 @@ Hãy thực hiện nhiệm vụ này một cách chính xác và hiệu quả, �
         summary = "Summary not available."
 
     # Extract metadata from content (placeholders for actual extraction logic)
-    author = re.search(r'Author:\s*(.*)', content)
-    published_date = re.search(r'Date:\s*(.*)', content)
+    # author = re.search(r'Author:\s*(.*)', content)
+    # published_date = re.search(r'Date:\s*(.*)', content)
 
-    author = author.group(1) if author else 'Unknown'
-    published_date = published_date.group(1) if published_date else 'Unknown'
+    # author = author.group(1) if author else 'Unknown'
+    # published_date = published_date.group(1) if published_date else 'Unknown'
 
     status = True
 
@@ -107,8 +107,16 @@ def save_to_json(data, output_file):
     """
     try:
         if os.path.exists(output_file):
-            with open(output_file, 'r', encoding='utf-8') as file:
-                json_data = json.load(file)
+            # Check if the file is empty
+            if os.path.getsize(output_file) > 0:
+                with open(output_file, 'r', encoding='utf-8') as file:
+                    try:
+                        json_data = json.load(file)
+                    except json.JSONDecodeError:
+                        print("JSON file is invalid or corrupted. Starting with a new file.")
+                        json_data = {}
+            else:
+                json_data = {}
         else:
             json_data = {}
 
@@ -126,6 +134,7 @@ def save_to_json(data, output_file):
             file.write(json.dumps(json_data, ensure_ascii=False, indent=4))
     except Exception as e:
         print(f"Error saving data to JSON file: {e}")
+
 
 def main(file_path, subject, api_key, output_file):
     """
@@ -151,9 +160,9 @@ def main(file_path, subject, api_key, output_file):
 
 # Example usage:
 if __name__ == "__main__":
-    file_path = "E:\Học\LabNLP\AI_finalbot\data\linearregression.txt"  # Change this to your file path
+    file_path = "naive.txt"  # Change this to your file path
     subject = "Sample Subject"
     api_key = "AIzaSyBqxphO1QKH-A2qV3gCXGBNARRVGvBz8Mc"  # Replace with your actual API key
-    output_file = "data\output.json"  # Output file name
+    output_file = "output.json"  # Output file name
 
     main(file_path, subject, api_key, output_file)
