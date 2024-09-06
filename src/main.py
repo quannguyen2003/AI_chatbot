@@ -1,13 +1,15 @@
-from intent_classification import classify_question, initialize_model, create_generation_config, configure_google_ai, load_api_key
-from hyde import get_ai_tutor_response, setup_hyde
+from model_loader import setup_model
+from intent_classification import classify_question
+from hyde import get_ai_tutor_response
+from prompt import main_prompt
 import json
-import os
-import google.generativeai as genai
-from prompt import *
 
 def load_and_process_json(file_path):
+    """
+    Load and process the JSON file.
+    """
     lesson_content = []
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf8') as file:
         try:
             json_data = json.load(file)
             for lesson_id, lesson_data in json_data.items():
@@ -17,28 +19,11 @@ def load_and_process_json(file_path):
         except json.JSONDecodeError as e:
             print(f"JSONDecodeError: {e}")
             return None
-            
-def setup_model():
-    api_key = os.getenv("GEMINI_API_KEY")
-    
-    if not api_key:
-        raise ValueError("API key not found in .env file. Make sure you have a GEMINI_API_KEY entry.")
-
-    genai.configure(api_key=api_key)
-    generation_config = {
-        "temperature": 0.45,
-        "top_p": 0.95,
-        "top_k": 64,
-        "max_output_tokens": 8192,
-        "response_mime_type": "text/plain",
-    }
-    return genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        generation_config=generation_config,
-        system_instruction=main_prompt
-    )
 
 def get_final_answer(model, content, question):
+    """
+    Get the final answer by combining content from Hyde and lesson content.
+    """
     prompt = f"""
     content: {content}
     question: {question}
@@ -47,41 +32,44 @@ def get_final_answer(model, content, question):
     return response.text
 
 def genAnswer(question, model):
+    """
+    Generate the final answer based on the question.
+    """
     # Load lesson content from output.json
-    lesson_content = load_and_process_json('output.json')
+    lesson_content = load_and_process_json('../data/output.json')
 
     # Set up the model for intent classification
-    api_key = load_api_key()
-    configure_google_ai(api_key)
-    generation_config = create_generation_config()
-    intent_model = initialize_model(generation_config)
+    intent_model = setup_model("gemini-1.5-flash", main_prompt)
 
     # Classify the question with Intent Classification
     intent_result = classify_question(intent_model, question, lesson_content)
-    # print(type(intent_result))
-    # print("\n--- Intent Classification Result ---")
-    # print(intent_result)
     
+    # Check if the intent_result is None
+    if intent_result is None:
+        print("Error: Intent classification returned None.")
+        return "Sorry, I couldn't understand your question."
+
     class_intent = intent_result.get('class', 'study')
-    if class_intent == 'toxic' or class_intent == 'greeting':
+
+    # Handle greeting or toxic responses
+    if class_intent == 'greeting':
         return intent_result.get('answer')
-    
+    elif class_intent == 'toxic':
+        return intent_result.get('answer')
 
-
-    # Get the list of lesson_ids from Intent Classification
+    # For "study" intent, continue with lesson processing
     lesson_ids = intent_result.get('id_lesson', '').split(',')
     
+    if not lesson_ids:
+        return "It seems like no lessons are directly related to your question. Please try asking about a specific topic."
+
     # Filter relevant content from output.json based on lesson_ids
     lesson_content_filtered = [item['summary'] for item in lesson_content if item['id'] in lesson_ids]
     lesson_content_filtered = "\n---\n".join(lesson_content_filtered)
-    # print("\n--- Filtered Lesson Content ---")
-    # print(lesson_content_filtered)
 
     # Get the answer from Hyde
-    hyde_model = setup_hyde()
+    hyde_model = setup_model("gemini-1.5-flash", main_prompt)
     hyde_response = get_ai_tutor_response(hyde_model, question)
-    # print("\n--- Hyde Response ---")
-    # print(hyde_response)
 
     # Combine content from Hyde, lesson_content, and the original question
     content = hyde_response + "\n---\n" + lesson_content_filtered
@@ -90,12 +78,17 @@ def genAnswer(question, model):
     final_answer = get_final_answer(model, content, question)
     return final_answer
 
+
+
+
 def main():
-    # Set up the model for final answer generation
-    model = setup_model()
+    """
+    Main execution function.
+    """
+    model = setup_model("gemini-1.5-flash", main_prompt)
 
     # Example question
-    question = "chào"
+    question = "Viết code KNN bằng for loop trong Python?"
 
     # Generate the final answer from the question
     final_answer = genAnswer(question, model)
@@ -106,4 +99,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -12,7 +12,7 @@ def read_pdf(file_path):
     """
     content = ""
     try:
-        with open(file_path, 'rb') as file:
+        with open(file_path, 'rb', encoding='utf8') as file:
             reader = PdfReader(file)
             for page in reader.pages:
                 content += page.extract_text()
@@ -28,7 +28,7 @@ def read_txt(file_path):
     """
     content = ""
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf8') as file:
             content = file.read()
     except Exception as e:
         print(f"Error reading TXT file: {e}")
@@ -151,9 +151,9 @@ def main(file_path, subject, api_key, output_file):
 
 # Example usage:
 if __name__ == "__main__":
-    file_path = "/home/sagemaker-user/k_means.txt"  # Change this to your file path
+    file_path = "E:\Học\LabNLP\AI_finalbot\data\linearregression.txt"  # Change this to your file path
     subject = "Sample Subject"
     api_key = "AIzaSyBqxphO1QKH-A2qV3gCXGBNARRVGvBz8Mc"  # Replace with your actual API key
-    output_file = "output.json"  # Output file name
+    output_file = "data\output.json"  # Output file name
 
     main(file_path, subject, api_key, output_file)

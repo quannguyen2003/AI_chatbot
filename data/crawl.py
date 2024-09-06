@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # The URL of the page you want to scrape
-url = "https://machinelearningcoban.com/2017/01/01/kmeans/"
+url = "https://machinelearningcoban.com/2016/12/28/linearregression/"
 
 # Send a request to fetch the content of the page
 response = requests.get(url)
@@ -23,7 +23,7 @@ if response.status_code == 200:
         clean_text = "\n".join([line.strip() for line in page_text.splitlines() if line.strip()])
 
         # Save the cleaned text into a single file
-        with open("k_means.txt", "w", encoding='utf-8') as file:
+        with open("linearregression.txt", "w", encoding='utf-8') as file:
             file.write(clean_text)
         print("Content saved to 'article_content.txt'.")
     else:

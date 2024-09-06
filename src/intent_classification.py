@@ -1,47 +1,6 @@
-import os
-import google.generativeai as genai
+from model_loader import setup_model
 import json
-from dotenv import load_dotenv
 from prompt import intent_prompt
-
-def load_api_key():
-    """
-    Load API key from the .env file.
-    """
-    load_dotenv()
-    api_key = os.getenv("GEMINI_API_KEY")
-    
-    if not api_key:
-        raise ValueError("API key not found. Make sure it is set in the .env file.")
-    
-    return api_key
-
-def configure_google_ai(api_key):
-    """
-    Configure the Google AI SDK with the loaded API key.
-    """
-    genai.configure(api_key=api_key)
-
-def create_generation_config():
-    """
-    Create the generation configuration for the GenerativeModel.
-    """
-    return {
-        "temperature": 1,
-        "top_p": 0.95,
-        "top_k": 64,
-        "max_output_tokens": 8192,
-    }
-
-def initialize_model(generation_config):
-    """
-    Initialize the GenerativeModel with the given configuration.
-    """
-    return genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        generation_config=generation_config,
-        system_instruction=intent_prompt,
-    )
 
 def load_and_process_json(file_path):
     """
@@ -66,19 +25,27 @@ def classify_question(model, question, lesson_content):
     prompt = f"""
     Question: {question}
     Lesson Content: {json.dumps(lesson_content)}
+
+    Please classify the question and return the answer in the following JSON format:
+    {{
+        "class": "<classification>",
+        "id_lesson": "<relevant_lesson_ids>",
+        "answer": "<the appropriate answer if greeting or toxic>"
+    }}
     """
 
     response = model.generate_content(prompt)
-    
-    # Extract the JSON part from the response
     response_text = response.text
+
+    # Print the raw response for debugging
+    # print(f"Raw response: {response_text}")
+
+    # Try to extract JSON response if possible
     try:
-        # Find the first '{' and the last '}'
+        # Attempt to find the first '{' and last '}'
         start = response_text.index('{')
         end = response_text.rindex('}') + 1
         json_str = response_text[start:end]
-        
-        # Parse the JSON string
         result = json.loads(json_str)
         return result
     except (ValueError, json.JSONDecodeError) as e:
@@ -86,12 +53,10 @@ def classify_question(model, question, lesson_content):
         print(f"Raw response: {response_text}")
         return None
 
+
 # Main execution
 if __name__ == "__main__":
-    api_key = load_api_key()
-    configure_google_ai(api_key)
-    generation_config = create_generation_config()
-    model = initialize_model(generation_config)
+    model = setup_model("gemini-1.5-flash", intent_prompt)
     file_path = 'output.json'
     lesson_content = load_and_process_json(file_path)
 
